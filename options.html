@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Purify for Plex</title><link rel="stylesheet" href="options.css"></head>
+<body><main>
+  <p class="eyebrow">PLEX → PURIFIER</p><h1>Purify for Plex</h1>
+  <p>Send a movie to your Purifier queue from its three-dot menu.</p>
+  <form id="settings">
+    <label for="purifierUrl">Purifier address</label><input id="purifierUrl" type="url" required placeholder="http://localhost:8787">
+    <label for="plexUrl">Direct Plex server address (optional)</label><input id="plexUrl" type="url" placeholder="http://localhost:32400">
+    <p class="help">Used when its server ID matches the selected movie. Other servers are discovered through your Plex account.</p>
+    <label for="plexToken">Plex token</label><input id="plexToken" type="password" required autocomplete="off" spellcheck="false">
+    <p class="help">Stored locally in this extension. Sent only to Plex. <a href="https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/" target="_blank" rel="noreferrer">Find your token</a>.</p>
+    <h2>File path mapping</h2>
+    <label for="sourcePrefix">Plex prefix</label><input id="sourcePrefix" required spellcheck="false">
+    <label for="targetPrefix">Purifier prefix</label><input id="targetPrefix" required spellcheck="false">
+    <p class="help">Default: /Volumes/Media/Media/Movies/Film.mp4 → /media/Movies/Film.mp4. Prefix matching is case sensitive. Paths outside this prefix are rejected.</p>
+    <p>Purifier must have a saved profile named <code>Movie</code>. Requests contain <code>file_path</code>, <code>profile</code>, and <code>title</code>.</p>
+    <button type="submit">Save settings</button><p id="status" role="status" aria-live="polite"></p>
+  </form>
+</main><script type="module" src="options.js"></script></body></html>

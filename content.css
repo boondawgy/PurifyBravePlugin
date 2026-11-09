@@ -1,0 +1,4 @@
+.purify-menu-item { display: block; width: 100%; border: 0; background: transparent; color: #e5a00d; text-align: left; font: inherit; padding: 12px 20px; cursor: pointer; }
+.purify-menu-item:hover, .purify-menu-item:focus-visible { background: #ffffff18; outline: 2px solid #e5a00d; outline-offset: -2px; }
+.purify-menu-item:disabled { opacity: .6; cursor: wait; }
+#purify-toast { position: fixed; bottom: 24px; right: 24px; z-index: 2147483647; max-width: min(440px, 85vw); padding: 18px 22px; border: 1px solid #e5a00d; border-radius: 10px; background: #202024; color: #fff; box-shadow: 0 8px 32px #0008; font: 15px/1.5 system-ui, sans-serif; }

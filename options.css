@@ -1,0 +1,7 @@
+:root { color-scheme: dark; font: 16px/1.5 system-ui, sans-serif; background: #151719; color: #eceeee; }
+body { margin: 0; } main { max-width: 620px; margin: 48px auto; padding: 0 24px 48px; }
+h1 { font-size: 34px; letter-spacing: -.04em; margin: 8px 0; } h2 { font-size: 20px; margin-top: 32px; }
+.eyebrow { color: #e5b94c; font-size: 12px; letter-spacing: .15em; } label { display: block; margin: 24px 0 8px; font-weight: 600; }
+input { width: 100%; box-sizing: border-box; padding: 12px; font: inherit; background: #23272a; border: 1px solid #50585e; border-radius: 7px; color: inherit; }
+input:focus { outline: 2px solid #e5b94c; } .help { font-size: 13px; color: #afb8bf; } a { color: #e5b94c; }
+button { background: #e5b94c; border: 0; border-radius: 7px; padding: 12px 20px; color: #191a1b; font: 600 15px system-ui; cursor: pointer; } #status { min-height: 24px; }

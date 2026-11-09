@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Purify for Plex",
+  "version": "0.1.4",
+  "description": "Send Plex movies to Purifier or request subtitle sidecar export.",
+  "permissions": ["storage"],
+  "host_permissions": ["https://plex.tv/*", "http://192.168.0.228/*"],
+  "optional_host_permissions": ["http://*/*", "https://*/*"],
+  "background": {"service_worker": "background.js", "type": "module"},
+  "options_ui": {"page": "options.html", "open_in_tab": true},
+  "action": {"default_title": "Purify settings"},
+  "content_scripts": [{
+    "matches": ["https://app.plex.tv/*", "http://localhost:32400/*", "http://127.0.0.1:32400/*"],
+    "js": ["menu-policy.js", "content.js"], "css": ["content.css"]
+  }]
+}
