@@ -3,7 +3,7 @@
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Purify for Plex</title><link rel="stylesheet" href="options.css"></head>
 <body><main>
   <p class="eyebrow">PLEX → PURIFIER</p><h1>Purify for Plex</h1>
-  <p>Send a movie to your Purifier queue from its three-dot menu.</p>
+  <p>Send a movie to your Purifier queue from the P button on its poster. An up arrow means sent or queued, a blue circle means processing, a green check means processing completed, and a red ! means failed (click to retry).</p>
   <form id="settings">
     <label for="purifierUrl">Purifier address</label><input id="purifierUrl" type="url" required placeholder="http://localhost:8787">
     <label for="plexUrl">Direct Plex server address (optional)</label><input id="plexUrl" type="url" placeholder="http://localhost:32400">
@@ -15,6 +15,20 @@
     <label for="targetPrefix">Purifier prefix</label><input id="targetPrefix" required spellcheck="false">
     <p class="help">Default: /Volumes/Media/Media/Movies/Film.mp4 → /media/Movies/Film.mp4. Prefix matching is case sensitive. Paths outside this prefix are rejected.</p>
     <p>Purifier must have a saved profile named <code>Movie</code>. Requests contain <code>file_path</code>, <code>profile</code>, and <code>title</code>.</p>
+    <h2>Status path matching</h2>
+    <p class="help">If Purifier processed files in a staging folder before exporting them into Plex’s library, map that source prefix to the library prefix here. Matching keeps the entire relative file path. This affects status matching only.</p>
+    <label for="statusSourcePrefix">Purifier job source prefix (optional)</label><input id="statusSourcePrefix" spellcheck="false" placeholder="/processing">
+    <label for="statusTargetPrefix">Library prefix for status matching (optional)</label><input id="statusTargetPrefix" spellcheck="false" placeholder="/media">
+    <p class="help">Example: /processing/Movies/Film.mp4 matches /media/Movies/Film.mp4. Use the Purifier-side library prefix after the Plex file path mapping above. Leave both blank to disable.</p>
+    <h2>Status refresh</h2>
+    <label class="checkbox-label" for="statusAutoRefresh"><input id="statusAutoRefresh" type="checkbox"> Refresh status automatically</label>
+    <label for="statusRefreshHours">Refresh every (hours)</label>
+    <input id="statusRefreshHours" type="number" min="1" max="8760" step="1" required>
+    <p class="help">Default: once a day. Turning automatic refresh off keeps the saved indicators until you refresh manually. Sending a movie always updates its indicator immediately.</p>
+    <button id="refreshStatus" type="button">Refresh now</button>
+    <p class="help">Refreshes Purifier’s saved job status for all open Plex tabs. Save settings before refreshing. Cached status is shared across tabs and survives browser restarts; failed refreshes keep the last known status.</p>
+    <p id="lastRefresh" class="help"></p>
+    <p id="refreshResult" role="status" aria-live="polite"></p>
     <button type="submit">Save settings</button><p id="status" role="status" aria-live="polite"></p>
   </form>
 </main><script type="module" src="options.js"></script></body></html>

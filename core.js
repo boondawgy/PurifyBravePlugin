@@ -1,6 +1,8 @@
 export const defaults = {
   purifierUrl: 'http://localhost:8787', plexToken: '', plexUrl: 'http://localhost:32400',
-  sourcePrefix: '/Volumes/Media/Media', targetPrefix: '/media'
+  sourcePrefix: '/Volumes/Media/Media', targetPrefix: '/media',
+  statusAutoRefresh: true, statusRefreshHours: 24,
+  statusSourcePrefix: '', statusTargetPrefix: ''
 };
 
 export function baseUrl(value) {

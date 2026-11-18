@@ -1,10 +1,36 @@
+// Home-video libraries also report individual files as type=movie. Require a
+// movie library with an actual movie metadata agent, rather than item type alone.
+export function isMovieLibrary(section) {
+  return section?.type === 'movie' && [
+    'tv.plex.agents.movie', 'com.plexapp.agents.plexmovie',
+    'com.plexapp.agents.imdb', 'com.plexapp.agents.themoviedb'
+  ].includes(section.agent);
+}
+
 // Only read-only Plex requests race. Purifier receives exactly one POST.
 export function createMovieLookup(request, cache) {
+  const sectionLookups = new Map();
+  async function movieLibrary(origin, sectionId, headers) {
+    if (!/^\d+$/.test(String(sectionId || ''))) return false;
+    // Share this read across cards; credentials isolate servers/accounts in memory.
+    const key = JSON.stringify([origin, headers['X-Plex-Token']]);
+    let cached = sectionLookups.get(key);
+    if (!cached || cached.expires <= Date.now()) {
+      const promise = request(`${origin}/library/sections`, {headers}, 'Plex library types');
+      cached = {promise, expires: Date.now() + 600000};
+      sectionLookups.set(key, cached);
+      promise.catch(() => { if (sectionLookups.get(key) === cached) sectionLookups.delete(key); });
+    }
+    const result = await cached.promise;
+    const section = result.MediaContainer?.Directory?.find(item => String(item.key) === String(sectionId));
+    return isMovieLibrary(section);
+  }
   async function metadata(origin, context, headers, signal) {
     const result = await request(`${origin}/library/metadata/${context.ratingKey}`, {headers, signal}, 'Plex movie metadata');
     const item = result.MediaContainer?.Metadata?.[0];
     if (!item) throw new Error('Plex returned no movie metadata.');
-    return {item, origin};
+    const eligible = item.type === 'movie' && await movieLibrary(origin, item.librarySectionID || result.MediaContainer?.librarySectionID, headers);
+    return {item: {...item, purifyMovieLibrary: eligible}, origin};
   }
   return async function lookup(settings, context, headers, cacheKey) {
     const cached = await cache.get(cacheKey);

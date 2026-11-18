@@ -28,3 +28,8 @@ test('returns successful queue responses without changing submission', async () 
   };
   assert.deepEqual(await jsonRequest('http://localhost:8787/media', {method:'POST'}, 'Purifier', fakeFetch), {queued:true});
 });
+
+test('shows safe nested errors from the Purifier status v1 envelope', async () => {
+  const fakeFetch = async () => new Response(JSON.stringify({api_version:1,error:{code:'invalid_request',message:'Invalid cursor or cursor query does not match.'}}), {status:400});
+  await assert.rejects(jsonRequest('http://localhost:8787/media/status', {}, 'Purifier status', fakeFetch), /Invalid cursor or cursor query does not match/);
+});

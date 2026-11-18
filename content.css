@@ -2,3 +2,13 @@
 .purify-menu-item:hover, .purify-menu-item:focus-visible { background: #ffffff18; outline: 2px solid #e5a00d; outline-offset: -2px; }
 .purify-menu-item:disabled { opacity: .6; cursor: wait; }
 #purify-toast { position: fixed; bottom: 24px; right: 24px; z-index: 2147483647; max-width: min(440px, 85vw); padding: 18px 22px; border: 1px solid #e5a00d; border-radius: 10px; background: #202024; color: #fff; box-shadow: 0 8px 32px #0008; font: 15px/1.5 system-ui, sans-serif; }
+.purify-poster-host { position: relative !important; }
+.purify-poster-button { position: absolute; top: 8px; right: 8px; z-index: 20; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 1px solid #f4c95d; border-radius: 50%; background: #202024ed; color: #f4c95d; box-shadow: 0 2px 8px #0009; font: bold 19px/1 system-ui, sans-serif; cursor: pointer; }
+.purify-poster-button:hover { background: #473a19; transform: scale(1.08); }
+.purify-poster-button:focus-visible { outline: 3px solid white; outline-offset: 3px; }
+.purify-poster-button:disabled { cursor: default; }
+.purify-poster-button.purify-sent { color: #fff; border-color: #74d5a2; background: #17643fed; }
+
+.purify-poster-button.purify-queued { color: #ffd46f; border-color: #ffd46f; background: #534015ed; }
+.purify-poster-button.purify-processing { color: #b8ddff; border-color: #8cc8ff; background: #174b76ed; }
+.purify-poster-button.purify-failed { color: #fff; border-color: #ff9999; background: #922d2ded; }
