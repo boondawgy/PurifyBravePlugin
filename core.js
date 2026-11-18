@@ -1,8 +1,11 @@
+export const defaultRequestBody = JSON.stringify({file_path: '{{file_path}}', profile: '{{profile}}', title: '{{title}}'}, null, 2);
+
 export const defaults = {
   purifierUrl: 'http://localhost:8787', plexToken: '', plexUrl: 'http://localhost:32400',
   sourcePrefix: '/Volumes/Media/Media', targetPrefix: '/media',
   statusAutoRefresh: true, statusRefreshHours: 24,
-  statusSourcePrefix: '', statusTargetPrefix: ''
+  statusSourcePrefix: '', statusTargetPrefix: '',
+  requestBodyTemplate: defaultRequestBody
 };
 
 export function baseUrl(value) {
@@ -41,4 +44,15 @@ export function moviePayload(metadata, settings) {
   }
   if (!metadata.title) throw new Error('Plex did not return a movie title.');
   return {file_path: mapPath(media[0].Part[0].file, settings.sourcePrefix, settings.targetPrefix), profile: 'Movie', title: metadata.title};
+}
+
+// Extract identities separately from submission so multi-version movies can
+// display status without silently picking a file to process.
+export function movieFiles(metadata, settings) {
+  if (metadata?.type !== 'movie') throw new Error('Purify currently supports movies only.');
+  const media = metadata.Media || [];
+  if (!media.length || media.some(version => version.Part?.length !== 1 || !version.Part[0].file)) {
+    throw new Error('This movie has multiple parts or no accessible file path.');
+  }
+  return media.map(version => mapPath(version.Part[0].file, settings.sourcePrefix, settings.targetPrefix));
 }

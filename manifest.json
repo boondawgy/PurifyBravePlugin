@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Purify for Plex",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "Send Plex movies to Purifier from their posters and track submitted movies.",
   "permissions": ["storage", "alarms"],
   "host_permissions": ["https://plex.tv/*"],

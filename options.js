@@ -1,4 +1,5 @@
-import {defaults, baseUrl} from './core.js';
+import {defaultRequestBody, defaults, baseUrl} from './core.js';
+import {renderRequestBody} from './templates.js';
 const form = document.getElementById('settings');
 const status = document.getElementById('status');
 const saved = {...defaults, ...await chrome.storage.local.get(Object.keys(defaults))};
@@ -7,6 +8,23 @@ for (const key of Object.keys(defaults)) {
   if (input.type === 'checkbox') input.checked = saved[key];
   else input.value = saved[key];
 }
+const templateInput = document.getElementById('requestBodyTemplate');
+function updateTemplatePreview() {
+  try {
+    const rendered = renderRequestBody(templateInput.value);
+    document.getElementById('templatePreview').textContent = JSON.stringify(rendered, null, 2);
+    document.getElementById('templateStatus').textContent = 'Valid template. Save settings to use it.';
+  } catch (error) {
+    document.getElementById('templatePreview').textContent = '';
+    document.getElementById('templateStatus').textContent = error.message;
+  }
+}
+templateInput.addEventListener('input', updateTemplatePreview);
+document.getElementById('resetBodyTemplate').addEventListener('click', () => {
+  templateInput.value = defaultRequestBody;
+  updateTemplatePreview();
+});
+updateTemplatePreview();
 async function showLastRefresh() {
   const info = await chrome.runtime.sendMessage({type: 'purify-sync-info'});
   document.getElementById('lastRefresh').textContent = (info?.fetchedAt
@@ -29,6 +47,7 @@ form.addEventListener('submit', async event => {
   event.preventDefault();
   try {
     const values = Object.fromEntries(Object.keys(defaults).map(key => [key, document.getElementById(key).type === 'checkbox' ? document.getElementById(key).checked : document.getElementById(key).value.trim()]));
+    renderRequestBody(values.requestBodyTemplate);
     values.statusRefreshHours = Number(values.statusRefreshHours);
     if (!Number.isInteger(values.statusRefreshHours) || values.statusRefreshHours < 1 || values.statusRefreshHours > 8760) throw new Error('Choose a refresh interval from 1 to 8760 whole hours.');
     values.purifierUrl = baseUrl(values.purifierUrl);

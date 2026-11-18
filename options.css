@@ -9,3 +9,8 @@ button { background: #e5b94c; border: 0; border-radius: 7px; padding: 12px 20px;
 .checkbox-label { display: flex; align-items: center; gap: 10px; }
 input[type="checkbox"] { width: auto; accent-color: #e5b94c; }
 button:disabled { opacity: .6; cursor: wait; }
+
+textarea { width: 100%; box-sizing: border-box; resize: vertical; padding: 12px; background: #23272a; border: 1px solid #50585e; border-radius: 7px; color: inherit; font: 14px/1.5 ui-monospace, monospace; }
+textarea:focus { outline: 2px solid #e5b94c; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #23272a; padding: 14px; border-radius: 7px; font-size: 13px; }
+summary { cursor: pointer; color: #e5b94c; margin: 14px 0; }

@@ -148,3 +148,9 @@ test('status prefix mapping respects boundaries and newer authoritative failures
   assert.equal(matchStatus({jobs}, '/media/Movies/Film.mp4', null, mapped).status, 'failed');
   assert.equal(matchStatus({jobs}, '/media/Movies/Other.mp4', null, mapped).status, 'unknown');
 });
+
+test('locally recorded custom POST path links back to the selected Plex movie without title matching', async () => {
+  const jobs = await fetchSnapshot(settings, async () => page([job(5, 'completed', {file_path:'/custom/Film.mp4', submitted_file_path:'/custom/Film.mp4'})]));
+  assert.equal(matchStatus({jobs,fetchedAt:200}, '/media/Movies/Film.mp4').status, 'unknown');
+  assert.equal(matchStatus({jobs,fetchedAt:200}, '/media/Movies/Film.mp4', {jobId:5,sentAt:100,submittedPath:'/custom/Film.mp4'}).status, 'completed');
+});

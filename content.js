@@ -100,19 +100,22 @@
       sent: 'Sent to Purifier — awaiting status refresh',
       queued: 'Queued in Purifier', processing: 'Processing in Purifier',
       completed: 'Purifier processing completed',
-      failed: 'Purifier failed — click to retry'
+      failed: 'Purifier failed — click to retry',
+      versions: `${state.completedCount} of ${state.versionCount} versions completed — separate the files in Plex to submit one`,
+      blocked: 'Purifier submission unavailable'
     };
     let label = state.sending ? 'Sending to Purifier…' : labels[status] || labels.unknown;
-    if (state.error && status === 'failed') label += `: ${state.error}`;
+    if (state.versionSummary) label += `: ${state.versionSummary}`;
+    if (state.error && ['failed', 'blocked'].includes(status)) label += `: ${state.error}`;
     if (state.stale) label += ' (status refresh unavailable; showing last known status)';
     button.title = label;
     button.setAttribute('aria-label', label);
     button.classList.toggle('purify-sent', status === 'completed');
-    button.classList.toggle('purify-queued', status === 'queued' || status === 'sent');
+    button.classList.toggle('purify-queued', status === 'queued' || status === 'sent' || status === 'versions');
     button.classList.toggle('purify-processing', status === 'processing');
     button.classList.toggle('purify-failed', status === 'failed');
-    button.disabled = !!state.sent || !!state.sending || !!state.loading;
-    const symbol = state.sending ? '…' : {completed: '✓', sent: '↥', queued: '↥', processing: '◌', failed: '!'}[status] || 'P';
+    button.disabled = !!state.sent || !!state.sending || !!state.loading || !!state.blocked;
+    const symbol = state.sending ? '…' : status === 'versions' ? `${state.completedCount}/${state.versionCount}` : status === 'blocked' ? '?' : {completed: '✓', sent: '↥', queued: '↥', processing: '◌', failed: '!'}[status] || 'P';
     if (button.textContent !== symbol) button.textContent = symbol;
   }
   function refreshButtons(key) {
@@ -123,7 +126,7 @@
   async function sendPoster(context) {
     const key = identity(context);
     const state = states.get(key);
-    if (!state || state.sent || state.sending) return;
+    if (!state || state.sent || state.sending || state.blocked) return;
     state.sending = true;
     refreshButtons(key);
     try {

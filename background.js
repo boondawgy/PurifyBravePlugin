@@ -1,5 +1,6 @@
-import {defaults, baseUrl, moviePayload} from './core.js';
+import {defaults, baseUrl, moviePayload, movieFiles} from './core.js';
 import {plexHeaders, jsonRequest} from './requests.js';
+import {renderRequestBody, requestVariables} from './templates.js';
 import {createMovieLookup} from './plex.js';
 import {createStatusSync, matchStatus, refreshInterval, refreshAlarm} from './status.js';
 chrome.action.onClicked.addListener(() => chrome.runtime.openOptionsPage());
@@ -79,21 +80,40 @@ async function movieAction(context, action) {
       if (action === 'purify-status') return {eligible: false, sent: false};
       throw new Error('Purify supports movie libraries only; home videos and other library types are excluded.');
     }
-    const payload = moviePayload(metadata, settings);
+    let paths;
+    try { paths = movieFiles(metadata, settings); }
+    catch (error) {
+      if (action === 'purify-status') return {eligible: true, sent: false, status: 'blocked', blocked: true, error: error.message};
+      throw error;
+    }
     const snapshot = await statusSync.ensure(settings);
     await scheduleStatus(settings, snapshot);
     // Read again after the sync: another tab might have submitted while we waited.
     const latestLocal = (await chrome.storage.local.get(statusKey))[statusKey] || local;
-    const state = matchStatus(snapshot, payload.file_path, latestLocal?.filePath === payload.file_path ? latestLocal : null, settings);
+    const versions = paths.map(path => ({path, ...matchStatus(snapshot, path, latestLocal?.filePath === path ? latestLocal : null, settings)}));
+    if (paths.length > 1) {
+      if (action !== 'purify-status') throw new Error('This Plex movie groups multiple files. Separate the files in Plex before submitting a single version.');
+      const completed = versions.filter(version => version.status === 'completed').length;
+      return {
+        eligible: true, sent: completed === versions.length, blocked: true,
+        status: completed === versions.length ? 'completed' : 'versions',
+        versionCount: versions.length, completedCount: completed,
+        versionSummary: versions.map(version => `${version.path.split('/').at(-1)}: ${version.status}`).join('; '),
+        stale: !!snapshot?.error
+      };
+    }
+    const state = versions[0];
     const response = {eligible: true, ...state, stale: !!snapshot?.error, syncError: snapshot?.error || null};
     if (action === 'purify-status') return response;
     if (state.sent) return {...response, message: state.status === 'completed' ? 'Purifier processing completed.' : 'Already sent to Purifier.'};
+    const payload = moviePayload(metadata, settings);
+    const body = renderRequestBody(settings.requestBodyTemplate, requestVariables(metadata, context, payload));
     const result = await jsonRequest(`${baseUrl(settings.purifierUrl)}/media`, {
-      method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
+      method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)
     }, 'Purifier submission');
     if (result.queued !== true) throw new Error(`Purifier did not queue the movie: ${result.reason || result.message || 'check its status page'}`);
     await chrome.storage.local.set({[statusKey]: {
-      sentAt: Date.now(), filePath: payload.file_path,
+      sentAt: Date.now(), filePath: payload.file_path, submittedPath: body.file_path,
       jobId: Number.isSafeInteger(result.job_id) ? result.job_id : null
     }});
     await broadcast('purify-status-updated');

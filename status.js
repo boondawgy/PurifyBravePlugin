@@ -60,7 +60,10 @@ export function matchStatus(snapshot, path, local, settings = {}) {
     ? target + value.slice(source.length) : value;
   path = normalize(path);
   const jobs = snapshot?.jobs || [];
-  const canonical = new Set(jobs.filter(job => normalize(job.path) === path || normalize(job.submittedPath) === path).map(job => normalize(job.path)));
+  const submittedPath = local?.submittedPath && normalize(local.submittedPath);
+  const canonical = new Set(jobs.filter(job => normalize(job.path) === path || normalize(job.submittedPath) === path ||
+    (submittedPath && (normalize(job.path) === submittedPath || normalize(job.submittedPath) === submittedPath)))
+    .map(job => normalize(job.path)));
   let job;
   if (canonical.size === 1) {
     const candidates = jobs.filter(item => normalize(item.path) === [...canonical][0]);

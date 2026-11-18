@@ -4,12 +4,14 @@ import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {webcrypto} from 'node:crypto';
 import {createStatusSync, matchStatus, refreshInterval, refreshAlarm} from '../status.js';
-import {defaults, baseUrl, moviePayload} from '../core.js';
+import {renderRequestBody, requestVariables} from '../templates.js';
+import {defaults, baseUrl, moviePayload, movieFiles} from '../core.js';
 
-function extension({movieLibrary = true, jobs = [], type = 'movie', queued = true} = {}) {
+function extension({media, movieLibrary = true, jobs = [], type = 'movie', queued = true} = {}) {
   const values = {plexToken: 'secret'};
   let listener;
   let posts = 0;
+  const bodies = [];
   const broadcasts = [];
   const storage = {
     setAccessLevel() {},
@@ -21,13 +23,13 @@ function extension({movieLibrary = true, jobs = [], type = 'movie', queued = tru
   };
   const source = readFileSync(new URL('../background.js', import.meta.url), 'utf8').replace(/^import .*;\n/gm, '');
   vm.runInNewContext(source, {
-    defaults, baseUrl, moviePayload, TextEncoder, URL, crypto: webcrypto,
+    defaults, baseUrl, moviePayload, movieFiles, renderRequestBody, requestVariables, TextEncoder, URL, crypto: webcrypto,
     createStatusSync, matchStatus, refreshInterval, refreshAlarm,
     plexHeaders: () => ({}),
-    createMovieLookup: () => async () => ({type, purifyMovieLibrary: movieLibrary, title: 'Film', Media: [{Part: [{file: '/Volumes/Media/Media/Movies/Film.mp4'}]}]}),
+    createMovieLookup: () => async () => ({type, purifyMovieLibrary: movieLibrary, title: 'Film', Media: media || [{Part: [{file: '/Volumes/Media/Media/Movies/Film.mp4'}]}]}),
     jsonRequest: async (url, init) => {
       if (init.method === 'GET') return {api_version: 1, items: jobs, next_cursor: null};
-      assert.equal(init.method, 'POST'); posts++; return {queued, job_id: 100};
+      assert.equal(init.method, 'POST'); bodies.push(JSON.parse(init.body)); posts++; return {queued, job_id: 100};
     },
     chrome: {
       alarms: {clear: async () => {}, create: async () => {}, onAlarm: {addListener() {}}},
@@ -39,6 +41,7 @@ function extension({movieLibrary = true, jobs = [], type = 'movie', queued = tru
   });
   return {
     values,
+    bodies,
     broadcasts,
     optionsMessage: type => new Promise(resolve => listener({type}, {url: 'chrome-extension://test/options.html'}, resolve)),
     posts: () => posts,
@@ -130,4 +133,31 @@ test('status-only mapping finds exported processing jobs while leaving submissio
   assert.equal((await app.message('purify-status')).status, 'completed');
   assert.equal((await app.message('purify')).sent, true);
   assert.equal(app.posts(), 0);
+});
+
+test('Elf with another merged movie still shows per-version status but cannot silently submit either file', async () => {
+  const app = extension({media:[
+    {Part:[{file:'/Volumes/Media/Media/Movies/Elf.mp4'}]},
+    {Part:[{file:'/Volumes/Media/Media/Movies/Enchanted.mp4'}]}
+  ], jobs:[{...job,file_path:'/media/Movies/Elf.mp4', submitted_file_path:'/media/Movies/Elf.mp4'}]});
+  const status = await app.message('purify-status');
+  assert.equal(status.eligible, true);
+  assert.equal(status.status, 'versions');
+  assert.equal(status.completedCount, 1);
+  assert.equal(status.versionCount, 2);
+  assert.equal(status.blocked, true);
+  assert.match(status.versionSummary, /Elf.mp4: completed/);
+  assert.match(status.versionSummary, /Enchanted.mp4: unknown/);
+  assert.equal((await app.message('purify')).ok, false);
+  assert.equal(app.posts(), 0);
+});
+test('saved JSON template is used by actual submission, while invalid templates send no POST', async () => {
+  const app = extension();
+  app.values.requestBodyTemplate = '{"file_path":"{{file_path}}","title":"{{title}}","processing":{"remove_playon_detected_ads":true},"plex":{"ratingKey":"{{rating_key}}","machineIdentifier":"{{server_id}}"}}';
+  assert.equal((await app.message('purify')).ok, true);
+  assert.deepEqual(app.bodies[0], {file_path:'/media/Movies/Film.mp4', title:'Film', processing:{remove_playon_detected_ads:true}, plex:{ratingKey:'123', machineIdentifier:'nas'}});
+  const invalid = extension();
+  invalid.values.requestBodyTemplate = '{"file_path":"{{secret}}"}';
+  assert.equal((await invalid.message('purify')).ok, false);
+  assert.equal(invalid.posts(), 0);
 });

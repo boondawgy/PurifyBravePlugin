@@ -68,7 +68,7 @@ async function load(cards, eligible = true, serverStatus = 'unknown') {
       async sendMessage(message) {
         calls.push(message);
         if (message.type === 'purify-refresh-policy') return {enabled:false};
-        return {ok:true, eligible, status:message.type === 'purify' ? 'sent' : serverStatus, sent:message.type === 'purify' || ['sent', 'queued', 'processing', 'completed'].includes(serverStatus), error:serverStatus === 'failed' ? 'Processing was canceled.' : null};
+        return {ok:true, eligible, blocked:serverStatus === 'versions', completedCount:1, versionCount:2, versionSummary:serverStatus === 'versions' ? 'Elf.mp4: completed; Enchanted.mp4: unknown' : null, status:message.type === 'purify' ? 'sent' : serverStatus, sent:message.type === 'purify' || ['sent', 'queued', 'processing', 'completed'].includes(serverStatus), error:serverStatus === 'failed' ? 'Processing was canceled.' : null};
       }
     }}
   });
@@ -127,4 +127,17 @@ test('server states have distinct accessible labels, colors, and retry behavior'
     assert.ok(button.attrs['aria-label'].includes(status === 'sent' ? 'Sent' : status === 'queued' ? 'Queued' : status === 'processing' ? 'Processing' : status));
     if (status === 'failed') assert.match(button.title, /canceled/);
   }
+});
+
+test('multi-version summary has a visible indicator and cannot submit the wrong file', async () => {
+  const poster = card('12943');
+  const app = await load([poster], true, 'versions');
+  const button = poster.querySelector('.purify-poster-button');
+  assert.ok(button);
+  assert.equal(button.textContent, '1/2');
+  assert.match(button.title, /1 of 2 versions completed/);
+  assert.equal(button.disabled, true);
+  button.events.click({preventDefault() {}, stopPropagation() {}});
+  await app.update();
+  assert.equal(app.calls.filter(call => call.type === 'purify').length, 0);
 });

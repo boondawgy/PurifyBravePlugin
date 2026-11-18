@@ -3,7 +3,7 @@ export function plexHeaders(token, clientIdentifier) {
     'X-Plex-Token': token,
     'X-Plex-Client-Identifier': clientIdentifier,
     'X-Plex-Product': 'Purify for Plex',
-    'X-Plex-Version': '0.3.2',
+    'X-Plex-Version': '0.4.0',
     Accept: 'application/json'
   };
 }

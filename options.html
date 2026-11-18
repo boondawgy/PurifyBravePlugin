@@ -14,7 +14,14 @@
     <label for="sourcePrefix">Plex prefix</label><input id="sourcePrefix" required spellcheck="false">
     <label for="targetPrefix">Purifier prefix</label><input id="targetPrefix" required spellcheck="false">
     <p class="help">Default: /Volumes/Media/Media/Movies/Film.mp4 → /media/Movies/Film.mp4. Prefix matching is case sensitive. Paths outside this prefix are rejected.</p>
-    <p>Purifier must have a saved profile named <code>Movie</code>. Requests contain <code>file_path</code>, <code>profile</code>, and <code>title</code>.</p>
+    <h2>POST request body</h2>
+    <label for="requestBodyTemplate">JSON body template</label>
+    <textarea id="requestBodyTemplate" rows="12" required spellcheck="false" aria-describedby="templateHelp templateStatus"></textarea>
+    <p id="templateHelp" class="help">Use placeholders inside quoted JSON values: <code>"file_path": "{{file_path}}"</code>. Variables: <code>{{file_path}}</code> (mapped path), <code>{{plex_file_path}}</code> (original path), <code>{{title}}</code>, <code>{{profile}}</code> (Movie), <code>{{year}}</code>, <code>{{media_type}}</code> (video), <code>{{rating_key}}</code>, <code>{{server_id}}</code>, <code>{{duration_ms}}</code>, <code>{{plex_guid}}</code>. A whole-value placeholder preserves numbers or null; placeholders inside longer strings insert text. Missing year, duration, or GUID becomes null. Quotes and other characters in movie data are escaped automatically.</p>
+    <p class="help">You can add nested processing/options objects or change the profile. An absolute <code>file_path</code> is required. The URL stays <code>POST /media</code>. Plex credentials are never template variables.</p>
+    <button id="resetBodyTemplate" type="button">Reset body to default</button>
+    <p id="templateStatus" class="help" role="status" aria-live="polite"></p>
+    <details><summary>Example rendered body</summary><p class="help">Uses sample movie data; this does not send a request.</p><pre id="templatePreview"></pre></details>
     <h2>Status path matching</h2>
     <p class="help">If Purifier processed files in a staging folder before exporting them into Plex’s library, map that source prefix to the library prefix here. Matching keeps the entire relative file path. This affects status matching only.</p>
     <label for="statusSourcePrefix">Purifier job source prefix (optional)</label><input id="statusSourcePrefix" spellcheck="false" placeholder="/processing">
